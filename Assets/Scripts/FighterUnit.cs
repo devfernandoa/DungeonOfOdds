@@ -116,6 +116,11 @@ public class FighterUnit : MonoBehaviour
         currentHealth -= amount;
         if (currentHealth <= 0)
         {
+            if (!isPlayer)
+            {
+                int floor = BattleDataManager.Instance.currentFloor;
+                PointsManager.Instance.AddPointsForKill(data, floor);
+            }
             Destroy(gameObject);
         }
     }
