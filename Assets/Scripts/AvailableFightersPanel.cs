@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,6 +12,9 @@ public class AvailableFightersPanel : MonoBehaviour
 
     public List<GameObject> currentFighterUIs = new List<GameObject>();
 
+    // Flag to track if initialization is complete
+    private bool isInitialized = false;
+
     private void Awake()
     {
         Instance = this;
@@ -18,30 +22,52 @@ public class AvailableFightersPanel : MonoBehaviour
 
     private void Start()
     {
+        StartCoroutine(InitializeWithDelay());
+    }
+
+    // Use a coroutine to ensure proper initialization sequence
+    private IEnumerator InitializeWithDelay()
+    {
         unlockedFighters.Clear();
 
+        // Make sure BattleDataManager is initialized
+        yield return new WaitUntil(() => BattleDataManager.Instance != null);
+
+        // Load unlocked fighters
         BattleDataManager.Instance.LoadUnlockedFighters(BattleDataManager.Instance.allAvailableFighters);
 
+        // Populate the fighter UI elements
         PopulateFighters();
 
+        // Short delay to ensure UI elements are created
+        yield return new WaitForSeconds(0.2f);
+
+        // Now load saved data into fighter slots
         foreach (var slot in FindObjectsOfType<FighterSlot>())
         {
             slot.LoadFromSavedData();
         }
 
-        // ✅ Fix: Make sure to refresh fighter states after loading all slots
-        Invoke("RefreshAllFighterStates", 0.1f); // Small delay to ensure all slots are loaded
+        // Additional delay to ensure slots are fully loaded
+        yield return new WaitForSeconds(0.3f);
+
+        // Final refresh of all fighter states
+        RefreshAllFighterStates();
+
+        // Mark initialization as complete
+        isInitialized = true;
     }
 
     public void PopulateFighters()
     {
+        // Clear existing UI elements
         foreach (Transform child in contentHolder)
             Destroy(child.gameObject);
         currentFighterUIs.Clear();
 
+        // Create UI elements for each unlocked fighter
         foreach (var fighter in unlockedFighters)
         {
-            // ✅ Only rebuild the UI, don't touch the list!
             if (fighter != null)
             {
                 GameObject go = Instantiate(fighterUIPrefab, contentHolder);
@@ -50,23 +76,43 @@ public class AvailableFightersPanel : MonoBehaviour
                 currentFighterUIs.Add(go);
             }
         }
+
+        // Log for debugging
+        Debug.Log($"Populated {currentFighterUIs.Count} fighters in UI panel");
     }
 
     public void AddFighterToList(Fighter fighter)
     {
         if (fighter == null) return;
 
-        // ✅ Prevent duplicate entries in unlocked list
-        unlockedFighters.Add(fighter);
+        // Add to unlocked list if not already present
+        if (!unlockedFighters.Contains(fighter))
+        {
+            unlockedFighters.Add(fighter);
+        }
 
-        // ✅ Prevent duplicate visual cards
-        if (currentFighterUIs.Exists(ui => ui.GetComponent<FighterUI>().fighterData == fighter))
-            return;
+        // Check if fighter UI already exists
+        bool uiExists = false;
+        foreach (var ui in currentFighterUIs)
+        {
+            if (ui.GetComponent<FighterUI>().fighterData == fighter)
+            {
+                uiExists = true;
+                break;
+            }
+        }
 
-        GameObject go = Instantiate(fighterUIPrefab, contentHolder);
-        FighterUI ui = go.GetComponent<FighterUI>();
-        ui.Setup(fighter);
-        currentFighterUIs.Add(go);
+        // Create UI if doesn't exist
+        if (!uiExists)
+        {
+            GameObject go = Instantiate(fighterUIPrefab, contentHolder);
+            FighterUI ui = go.GetComponent<FighterUI>();
+            ui.Setup(fighter);
+            currentFighterUIs.Add(go);
+        }
+
+        // Save unlocked fighters
+        BattleDataManager.Instance.SaveUnlockedFighters();
     }
 
     public void RemoveFighterFromList(Fighter fighter)
@@ -81,6 +127,12 @@ public class AvailableFightersPanel : MonoBehaviour
                 break; // remove only one
             }
         }
+
+        // Also remove from unlocked fighters list
+        unlockedFighters.Remove(fighter);
+
+        // Save updated unlocked fighters
+        BattleDataManager.Instance.SaveUnlockedFighters();
     }
 
     public void ReturnFighter(Fighter fighter)
@@ -90,11 +142,15 @@ public class AvailableFightersPanel : MonoBehaviour
 
     void OnEnable()
     {
-        // ✅ Always fully rebuild the UI
-        PopulateFightersUIOnly();
+        // Only rebuild UI if we're past initialization
+        if (isInitialized)
+        {
+            // Rebuild UI elements
+            PopulateFightersUIOnly();
 
-        // ✅ Fix: Update the visual state of all fighters to reflect usage
-        RefreshAllFighterStates();
+            // Update the visual state of all fighters
+            RefreshAllFighterStates();
+        }
     }
 
     public void PopulateFightersUIOnly()
@@ -112,25 +168,22 @@ public class AvailableFightersPanel : MonoBehaviour
         }
     }
 
-    // ✅ New method to refresh the visual state of all fighters
+    // Method to refresh the visual state of all fighters
     public void RefreshAllFighterStates()
     {
         // First, rebuild the FighterUsageTracker with current fighter slots
-        // Check if the instance is null to avoid errors
-        if (FighterUsageTracker.Instance == null)
+        if (FighterUsageTracker.Instance != null)
         {
-            Debug.LogWarning("FighterUsageTracker instance is null!");
-            return;
-        }
-        FighterUsageTracker.Instance.RebuildUsageFromSlots();
+            FighterUsageTracker.Instance.RebuildUsageFromSlots();
 
-        // Then update the visual state of all fighter UIs
-        foreach (var go in currentFighterUIs)
-        {
-            FighterUI ui = go.GetComponent<FighterUI>();
-            if (ui != null)
+            // Then update the visual state of all fighter UIs
+            foreach (var go in currentFighterUIs)
             {
-                ui.UpdateVisualState();
+                FighterUI ui = go.GetComponent<FighterUI>();
+                if (ui != null)
+                {
+                    ui.UpdateVisualState();
+                }
             }
         }
     }

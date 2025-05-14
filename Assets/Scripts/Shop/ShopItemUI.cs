@@ -10,7 +10,7 @@ public class ShopItemUI : MonoBehaviour
     public TextMeshProUGUI rarityText;
     public Button buyButton;
 
-    private ShopOffer offer;
+    public ShopOffer offer;
     private ShopManager shop;
 
     public void Setup(ShopOffer offer, ShopManager shop)

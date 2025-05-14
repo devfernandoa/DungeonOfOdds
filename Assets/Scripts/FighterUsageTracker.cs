@@ -5,78 +5,89 @@ public class FighterUsageTracker : MonoBehaviour
 {
     public static FighterUsageTracker Instance;
 
+    private Dictionary<FighterUI, bool> usedFighters = new Dictionary<FighterUI, bool>();
+
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
-    private HashSet<FighterUI> usedUIs = new HashSet<FighterUI>();
-
-    public void MarkUsed(FighterUI ui)
+    public void MarkUsed(FighterUI fighter)
     {
-        usedUIs.Add(ui);
+        if (fighter == null) return;
+
+        // Make sure we don't have duplicates
+        if (!usedFighters.ContainsKey(fighter))
+        {
+            usedFighters.Add(fighter, true);
+        }
+        else
+        {
+            usedFighters[fighter] = true;
+        }
+
+        fighter.UpdateVisualState();
     }
 
-    public void UnmarkUsed(FighterUI ui)
+    public void UnmarkUsed(FighterUI fighter)
     {
-        usedUIs.Remove(ui);
+        if (fighter == null) return;
+
+        if (usedFighters.ContainsKey(fighter))
+        {
+            usedFighters[fighter] = false;
+        }
+
+        fighter.UpdateVisualState();
     }
 
-    public bool IsUsed(FighterUI ui)
+    public bool IsUsed(FighterUI fighter)
     {
-        return usedUIs.Contains(ui);
+        if (fighter == null) return false;
+
+        return usedFighters.TryGetValue(fighter, out bool used) && used;
     }
 
+    // Rebuild the usage state based on currently occupied slots
     public void RebuildUsageFromSlots()
     {
-        // Clear the current usage tracking
-        usedUIs.Clear();
+        // Clear current state
+        usedFighters.Clear();
 
         // Find all fighter slots in the scene
         FighterSlot[] slots = FindObjectsOfType<FighterSlot>();
 
-        // Create a dictionary to track how many instances of each fighter are used
-        Dictionary<Fighter, int> usedFighterCounts = new Dictionary<Fighter, int>();
-
-        // Count used fighters
         foreach (var slot in slots)
         {
-            if (slot.slotIndex < BattleDataManager.Instance.selectedFighters.Count &&
-                BattleDataManager.Instance.selectedFighters[slot.slotIndex] != null)
+            // If the slot has a fighter assigned
+            if (slot.slotIndex < BattleDataManager.Instance.selectedFighters.Count)
             {
-                Fighter fighter = BattleDataManager.Instance.selectedFighters[slot.slotIndex];
-                if (!usedFighterCounts.ContainsKey(fighter))
+                Fighter slotFighter = BattleDataManager.Instance.selectedFighters[slot.slotIndex];
+
+                if (slotFighter != null)
                 {
-                    usedFighterCounts[fighter] = 0;
-                }
-                usedFighterCounts[fighter]++;
-            }
-        }
-
-        // Now mark the correct number of UIs for each fighter
-        foreach (var fighterEntry in usedFighterCounts)
-        {
-            Fighter fighter = fighterEntry.Key;
-            int countNeeded = fighterEntry.Value;
-            int countMarked = 0;
-
-            // Debug info
-            Debug.Log($"Fighter {fighter.fighterName} needs {countNeeded} instances marked as used");
-
-            // Loop through all available fighter UIs
-            foreach (var go in AvailableFightersPanel.Instance.currentFighterUIs)
-            {
-                FighterUI ui = go.GetComponent<FighterUI>();
-                if (ui == null) continue;
-
-                // If this UI represents the fighter we're looking for and we need more
-                if (ui.fighterData == fighter && countMarked < countNeeded)
-                {
-                    MarkUsed(ui);
-                    countMarked++;
-                    Debug.Log($"Marked Fighter {fighter.fighterName} instance {countMarked} as used");
+                    // Find the matching FighterUI
+                    foreach (var ui in FindObjectsOfType<FighterUI>())
+                    {
+                        if (ui.fighterData == slotFighter)
+                        {
+                            // Mark this fighter as used
+                            MarkUsed(ui);
+                            break;
+                        }
+                    }
                 }
             }
         }
+
+        // Log for debugging
+        Debug.Log($"Rebuilt usage tracker with {usedFighters.Count} fighters");
     }
 }
