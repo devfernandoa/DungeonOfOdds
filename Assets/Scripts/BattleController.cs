@@ -270,8 +270,8 @@ public class BattleController : MonoBehaviour
         boss.luck = baseFighter.luck;
 
         // Extra scaling for bosses
-        float healthScale = 2.5f + 0.3f * floor;
-        float attackScale = 2.0f + 0.2f * floor;
+        float healthScale = 1.5f + 0.3f * floor;
+        float attackScale = 1.5f + 0.2f * floor;
 
         boss.health = Mathf.RoundToInt(baseFighter.health * healthScale);
         boss.attack = Mathf.RoundToInt(baseFighter.attack * attackScale);
