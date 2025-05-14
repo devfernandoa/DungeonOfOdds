@@ -13,6 +13,7 @@ public class BattleController : MonoBehaviour
     private List<FighterUnit> playerUnits = new List<FighterUnit>();
     private List<FighterUnit> enemyUnits = new List<FighterUnit>();
     private bool battleEnded = false;
+    private bool battleStarted = false;
     public VictoryDefeatUI victoryUI; // Assign in Inspector
 
     private Dictionary<Fighter.Rarity, float> rarityWeights = new Dictionary<Fighter.Rarity, float>
@@ -26,6 +27,7 @@ public class BattleController : MonoBehaviour
     void Start()
     {
         battleEnded = false;
+        battleStarted = false;
     }
 
     private void FixedUpdate()
@@ -33,14 +35,32 @@ public class BattleController : MonoBehaviour
         bool hasValidFighters = BattleDataManager.Instance.selectedFighters.Exists(f => f != null);
         if (!hasValidFighters)
         {
-            return; // don't run CheckBattleEnd
+            return;
         }
+
+        if (BattleDataManager.Instance == null ||
+        !BattleDataManager.Instance.selectedFighters.Exists(f => f != null))
+        {
+            Debug.LogWarning("No valid fighters selected!");
+            return;
+        }
+
+        if (!battleStarted || battleEnded) return;
+
         CheckBattleEnd();
     }
 
 
     public void StartBattle()
     {
+        if (BattleDataManager.Instance == null ||
+        !BattleDataManager.Instance.selectedFighters.Exists(f => f != null))
+        {
+            Debug.LogWarning("No valid fighters selected!");
+            return;
+        }
+
+
         battleEnded = false;
 
         floorHeaderText.color = Color.white;
@@ -74,6 +94,8 @@ public class BattleController : MonoBehaviour
 
         SpawnPlayerUnits();
         SpawnEnemies();
+
+        battleStarted = true;
     }
 
     void SpawnPlayerUnits()
@@ -246,12 +268,16 @@ public class BattleController : MonoBehaviour
 
         if (playerUnits.Count == 0)
         {
+            Debug.Log("Player units defeated!");
             battleEnded = true;
+            battleStarted = false;
             HandleBattleOutcome(false); // defeat
         }
         else if (enemyUnits.Count == 0)
         {
+            Debug.Log("Enemy units defeated!");
             battleEnded = true;
+            battleStarted = false;
             HandleBattleOutcome(true); // victory
         }
     }

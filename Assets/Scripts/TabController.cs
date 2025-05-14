@@ -16,7 +16,8 @@ public class TabController : MonoBehaviour
         gamblePanel.SetActive(false);
         victoryPanel.SetActive(false);
 
-        FindObjectOfType<BattleController>()?.StartBattle();
+        // Wait 1 second before starting the battle
+        Invoke("StartBattle", 0.5f);
     }
 
     public void ShowTeamTab()
@@ -42,6 +43,11 @@ public class TabController : MonoBehaviour
         shopPanel.SetActive(false);
         gamblePanel.SetActive(true);
         victoryPanel.SetActive(false);
+    }
+
+    private void StartBattle()
+    {
+        FindObjectOfType<BattleController>()?.StartBattle();
     }
 
     void Start()

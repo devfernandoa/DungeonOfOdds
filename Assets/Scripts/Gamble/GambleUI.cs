@@ -42,6 +42,8 @@ public class GambleUI : MonoBehaviour
             int.TryParse(wagerInput.text, out int wager) &&
             wager > 0 &&
             wager <= PointsManager.Instance.currentPoints;
+
+        UpdateWinChancePreview();
     }
 
     void OnGameChanged(int index)
@@ -123,6 +125,5 @@ public class GambleUI : MonoBehaviour
         }
 
         winChanceText.text = $"Win Chance: {(finalChance * 100f):F1}%";
-        Debug.Log($"Luck: {totalLuck}, Chance: {finalChance:F2}");
     }
 }
