@@ -62,6 +62,12 @@ public class FighterSlot : MonoBehaviour, IDropHandler
         BattleDataManager.Instance.SaveProgress();
 
         RefreshAllUIs();
+
+        // ✅ Fix: Also refresh fighter states after clearing a slot
+        if (AvailableFightersPanel.Instance != null)
+        {
+            AvailableFightersPanel.Instance.RefreshAllFighterStates();
+        }
     }
 
     private void RefreshAllUIs()
@@ -108,4 +114,3 @@ public class FighterSlot : MonoBehaviour, IDropHandler
     }
 
 }
-

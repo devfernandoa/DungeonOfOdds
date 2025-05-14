@@ -7,6 +7,9 @@ public class BattleDataManager : MonoBehaviour
 
     public List<Fighter> selectedFighters = new List<Fighter>();
     public List<Fighter> allAvailableFighters = new List<Fighter>();
+    public List<Fighter> unlockedFighters = new();
+
+    private const string UnlockedFightersKey = "UnlockedFighters";
 
     public int currentFloor = 1;
 
@@ -78,6 +81,67 @@ public class BattleDataManager : MonoBehaviour
     {
         return allAvailableFighters.Find(f => f.fighterName == name);
     }
+    public void UnlockFighter(Fighter f)
+    {
+        if (!unlockedFighters.Contains(f))
+            unlockedFighters.Add(f);
+    }
 
+    public void SaveUnlockedFighters()
+    {
+        var panel = AvailableFightersPanel.Instance;
+        if (panel == null)
+        {
+            Debug.LogError("AvailableFightersPanel.Instance is null when saving.");
+            return;
+        }
+
+        List<string> fighterNames = new();
+
+        foreach (var f in panel.unlockedFighters)
+        {
+            fighterNames.Add(f.fighterName);
+        }
+
+        string json = JsonUtility.ToJson(new StringListWrapper { values = fighterNames });
+        PlayerPrefs.SetString("UnlockedFighters", json);
+        PlayerPrefs.Save();
+
+        Debug.Log("Saved fighters: " + string.Join(", ", fighterNames));
+    }
+
+    public void LoadUnlockedFighters(List<Fighter> allFighters)
+    {
+        if (!PlayerPrefs.HasKey("UnlockedFighters")) return;
+
+        string json = PlayerPrefs.GetString("UnlockedFighters");
+        StringListWrapper wrapper = JsonUtility.FromJson<StringListWrapper>(json);
+
+        var panel = AvailableFightersPanel.Instance;
+
+        foreach (string name in wrapper.values)
+        {
+            Fighter found = allFighters.Find(f => f.fighterName == name);
+            if (found != null)
+            {
+                panel.unlockedFighters.Add(found); // ✅ Only update list
+            }
+        }
+    }
+
+
+    [System.Serializable]
+    private class StringListWrapper
+    {
+        public List<string> values;
+    }
+
+    [ContextMenu("Clear Saved Fighters")]
+    public void ClearSavedFighters()
+    {
+        PlayerPrefs.DeleteKey("UnlockedFighters");
+        PlayerPrefs.Save();
+        Debug.Log("✅ Cleared saved fighters from PlayerPrefs.");
+    }
 
 }

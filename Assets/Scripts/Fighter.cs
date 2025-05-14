@@ -15,4 +15,5 @@ public class Fighter : ScriptableObject
     public bool isRanged;
     public float range;
     public float projectileSpeed = 5f; // Only used for ranged
+    public string fighterID;
 }
