@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 99324428b8bb93c4c9b931b8268f5b60, type: 3}
-  m_Name: Luis!
+  m_Name: Club
   m_EditorClassIdentifier: 
-  fighterName: Luis
-  icon: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  rarity: 3
-  health: 1000
-  attack: 1000
-  moveSpeed: 1000
-  attackCooldown: 0.1
-  luck: 1000
-  isRanged: 1
-  range: 1000
-  projectileSpeed: 1000
+  fighterName: Club
+  icon: {fileID: 0}
+  rarity: 0
+  health: 12
+  attack: 7
+  moveSpeed: 150
+  attackCooldown: 1.6
+  luck: 13
+  isRanged: 0
+  range: 90
+  projectileSpeed: 0
   fighterID: 

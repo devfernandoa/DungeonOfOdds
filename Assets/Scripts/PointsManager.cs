@@ -64,7 +64,12 @@ public class PointsManager : MonoBehaviour
 
     public void LoadPoints()
     {
-        currentPoints = PlayerPrefs.GetInt("PlayerPoints", 0);
+        currentPoints = PlayerPrefs.GetInt("PlayerPoints", 500);
+        if (currentPoints == 0)
+        {
+            // Give some starting points if none are saved
+            currentPoints = 500;
+        }
     }
 
     public void ResetPoints()

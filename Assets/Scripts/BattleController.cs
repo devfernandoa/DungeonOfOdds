@@ -119,17 +119,16 @@ public class BattleController : MonoBehaviour
     void SpawnEnemies()
     {
         int floor = BattleDataManager.Instance.currentFloor;
-        bool IsBossFloor(int floor) => floor % 10 == 0;
+        bool isBoss = BattleDataManager.Instance.IsBossFloor(floor);
+        System.Random rng = new System.Random(floor);
 
-        System.Random rng = new System.Random(BattleDataManager.Instance.currentFloor);
-        bool isBoss = IsBossFloor(floor);
-        int enemyCount = isBoss ? 1 : rng.Next(2, 4);
+        int enemyCount = isBoss ? 1 : GetEnemyCountForFloor(floor);
 
         List<Fighter> enemies = isBoss
             ? new List<Fighter> { GenerateBossFighter(floor, rng) }
             : GenerateEnemiesForFloor(floor, enemyCount, rng);
 
-        List<Vector3> positions = GetEvenlySpacedPositions(enemySpawnArea, enemyCount);
+        List<Vector3> positions = GetEvenlySpacedPositions(enemySpawnArea, enemies.Count);
 
         for (int i = 0; i < enemies.Count; i++)
         {
@@ -138,6 +137,15 @@ public class BattleController : MonoBehaviour
             unit.Init(enemies[i], isPlayer: false);
             enemyUnits.Add(unit);
         }
+    }
+
+    int GetEnemyCountForFloor(int floor)
+    {
+        if (floor <= 10) return 1;
+        if (floor <= 30) return 2;
+        if (floor <= 60) return 3;
+        if (floor <= 100) return 4;
+        return 5;
     }
 
     List<Vector3> GetEvenlySpacedPositions(Transform area, int count)
@@ -162,48 +170,66 @@ public class BattleController : MonoBehaviour
     public List<Fighter> GenerateEnemiesForFloor(int floor, int enemyCount, System.Random rng)
     {
         List<Fighter> pool = BattleDataManager.Instance.allAvailableFighters;
-
-        List<Fighter> result = new List<Fighter>();
+        List<Fighter> result = new();
 
         for (int i = 0; i < enemyCount; i++)
         {
-            Fighter selected = GetRandomFighterByRarity(pool, rng);
-            result.Add(CloneAndScaleFighter(selected, floor));
+            Fighter selected = GetRandomFighterByRarity(pool, rng, floor);
+            Fighter enemy = CloneAndScaleFighter(selected, floor);
+
+            // Apply early floor debuff
+            if (floor <= 10)
+            {
+                enemy.health = Mathf.RoundToInt(enemy.health * 0.6f);
+                enemy.attack = Mathf.RoundToInt(enemy.attack * 0.6f);
+            }
+            else if (floor <= 20)
+            {
+                enemy.health = Mathf.RoundToInt(enemy.health * 0.8f);
+                enemy.attack = Mathf.RoundToInt(enemy.attack * 0.85f);
+            }
+
+            result.Add(enemy);
         }
 
         return result;
     }
-    private Fighter GetRandomFighterByRarity(List<Fighter> pool, System.Random rng)
+    private Fighter GetRandomFighterByRarity(List<Fighter> pool, System.Random rng, int floor)
     {
-        // Build weighted list
-        List<(Fighter fighter, float weight)> weighted = new();
+        Dictionary<Fighter.Rarity, float> dynamicWeights = new()
+    {
+        { Fighter.Rarity.Common, 1f },
+        { Fighter.Rarity.Rare, floor >= 50 ? Mathf.Lerp(0f, 0.2f, (floor - 50) / 50f) : 0f }, // Up to 0.2 at floor 100
+        { Fighter.Rarity.Epic, floor >= 100 ? Mathf.Lerp(0f, 0.05f, (floor - 100) / 100f) : 0f }, // Up to 0.05 at 200
+        { Fighter.Rarity.Legendary, floor >= 200 ? Mathf.Lerp(0f, 0.01f, (floor - 200) / 100f) : 0f } // Up to 0.01 at 300+
+    };
 
+        List<(Fighter fighter, float weight)> weightedPool = new();
         foreach (var f in pool)
         {
-            if (rarityWeights.TryGetValue(f.rarity, out float weight))
+            if (dynamicWeights.TryGetValue(f.rarity, out float weight) && weight > 0f)
             {
-                weighted.Add((f, weight));
+                weightedPool.Add((f, weight));
             }
         }
 
-        // Total weight
-        float total = 0f;
-        foreach (var entry in weighted)
-            total += entry.weight;
+        float totalWeight = 0f;
+        foreach (var entry in weightedPool)
+            totalWeight += entry.weight;
 
-        // Roll a random number
-        float roll = (float)(rng.NextDouble() * total);
+        float roll = (float)(rng.NextDouble() * totalWeight);
         float cumulative = 0f;
 
-        foreach (var entry in weighted)
+        foreach (var entry in weightedPool)
         {
             cumulative += entry.weight;
             if (roll <= cumulative)
                 return entry.fighter;
         }
 
-        return weighted[0].fighter; // fallback
+        return weightedPool[0].fighter; // fallback
     }
+
     private Fighter CloneAndScaleFighter(Fighter baseFighter, int floor)
     {
         Fighter f = ScriptableObject.CreateInstance<Fighter>();

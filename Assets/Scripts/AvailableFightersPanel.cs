@@ -116,6 +116,12 @@ public class AvailableFightersPanel : MonoBehaviour
     public void RefreshAllFighterStates()
     {
         // First, rebuild the FighterUsageTracker with current fighter slots
+        // Check if the instance is null to avoid errors
+        if (FighterUsageTracker.Instance == null)
+        {
+            Debug.LogWarning("FighterUsageTracker instance is null!");
+            return;
+        }
         FighterUsageTracker.Instance.RebuildUsageFromSlots();
 
         // Then update the visual state of all fighter UIs
