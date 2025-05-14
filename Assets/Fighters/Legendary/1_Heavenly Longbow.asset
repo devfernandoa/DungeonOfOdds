@@ -19,7 +19,7 @@ MonoBehaviour:
   attack: 42
   moveSpeed: 320
   attackCooldown: 1.6
-  luck: 100
+  luck: 150
   isRanged: 1
   range: 650
   projectileSpeed: 800

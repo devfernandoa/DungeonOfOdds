@@ -18,6 +18,13 @@ public class ShopManager : MonoBehaviour
     private const string LastShopRefreshKey = "LastShopRefresh";
     private const string DailyShopOffersKey = "DailyShopOffers";
 
+    // Rarity boost factors based on the number of purchases
+    [Header("Rarity Boost Settings")]
+    public float rareBoostPerPurchase = 0.05f;    // Increase rare chance by 5% per purchase
+    public float epicBoostPerPurchase = 0.01f;    // Increase epic chance by 1% per purchase
+    public float legendaryBoostPerPurchase = 0.001f; // Increase legendary chance by 0.1% per purchase
+    public int maxBoostPurchases = 50;            // Cap the boost effect after this many purchases
+
     private List<Fighter> fighterPool => BattleDataManager.Instance.allAvailableFighters;
     private List<ShopOffer> dailyOffers = new();
     private DateTime nextRefreshTime;
@@ -192,14 +199,8 @@ public class ShopManager : MonoBehaviour
 
     Fighter GetRandomFighterByRarity()
     {
-        // Same logic as in BattleController's rarity weights
-        Dictionary<Fighter.Rarity, float> rarityWeights = new()
-        {
-            { Fighter.Rarity.Common, 1f },
-            { Fighter.Rarity.Rare, 0.1f },
-            { Fighter.Rarity.Epic, 0.01f },
-            { Fighter.Rarity.Legendary, 0.001f },
-        };
+        // Get boosted rarity weights based on purchase count
+        Dictionary<Fighter.Rarity, float> rarityWeights = GetBoostedRarityWeights();
 
         List<(Fighter, float)> weighted = new();
         foreach (var f in fighterPool)
@@ -220,6 +221,23 @@ public class ShopManager : MonoBehaviour
         }
 
         return fighterPool[0];
+    }
+
+    private Dictionary<Fighter.Rarity, float> GetBoostedRarityWeights()
+    {
+        // Calculate boost factor (caps at maxBoostPurchases)
+        int effectivePurchases = Mathf.Min(randomBuyCount, maxBoostPurchases);
+
+        // Base weights
+        Dictionary<Fighter.Rarity, float> rarityWeights = new()
+        {
+            { Fighter.Rarity.Common, 1f },
+            { Fighter.Rarity.Rare, 0.1f + (rareBoostPerPurchase * effectivePurchases) },
+            { Fighter.Rarity.Epic, 0.01f + (epicBoostPerPurchase * effectivePurchases) },
+            { Fighter.Rarity.Legendary, 0.001f + (legendaryBoostPerPurchase * effectivePurchases) },
+        };
+
+        return rarityWeights;
     }
 
     public void GenerateDailyShop()
@@ -294,6 +312,9 @@ public class ShopManager : MonoBehaviour
     {
         pointsText.text = $"Points: {PointsManager.Instance.currentPoints}";
         randomFighterButtonText.text = $"Buy Random ({GetRandomFighterCost()})";
+
+        // Optional: Add UI to show increased chances
+        // could add something like: "Rare+ Chance: +X%"
     }
 
     private void SaveBuyCount()
@@ -306,4 +327,21 @@ public class ShopManager : MonoBehaviour
     {
         randomBuyCount = PlayerPrefs.GetInt(BuyCountKey, 0);
     }
+
+    [ContextMenu("Debug: Unlock Random Fighter")]
+    public void DebugUnlockRandomFighter()
+    {
+        if (fighterPool.Count == 0)
+        {
+            Debug.LogWarning("Fighter pool is empty.");
+            return;
+        }
+
+        Fighter randomFighter = fighterPool[UnityEngine.Random.Range(0, fighterPool.Count)];
+        AvailableFightersPanel.Instance.AddFighterToList(randomFighter);
+        BattleDataManager.Instance.SaveUnlockedFighters();
+
+        Debug.Log($"✅ Unlocked {randomFighter.fighterName} for testing.");
+    }
+
 }

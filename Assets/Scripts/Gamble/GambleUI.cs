@@ -21,10 +21,12 @@ public class GambleUI : MonoBehaviour
         // Register games
         games[GambleGameType.CoinFlip] = new CoinFlipGame();
         games[GambleGameType.Roulette] = new RouletteGame();
+        games[GambleGameType.SlotMachine] = new SlotMachineGame();
+        games[GambleGameType.MysteryBox] = new MysteryBoxGame();
 
         // Populate dropdown
         gameDropdown.ClearOptions();
-        gameDropdown.AddOptions(new List<string> { "Coin Flip", "Roulette" });
+        gameDropdown.AddOptions(new List<string> { "Coin Flip", "Roulette", "Slot Machine", "Mystery Box" });
         gameDropdown.onValueChanged.AddListener(OnGameChanged);
         OnGameChanged(0);
 
@@ -49,7 +51,21 @@ public class GambleUI : MonoBehaviour
     void OnGameChanged(int index)
     {
         currentGame = games[(GambleGameType)index];
-        choiceDropdown.gameObject.SetActive(currentGame is RouletteGame); // only show for games that use it
+
+        bool usesChoice = currentGame is RouletteGame || currentGame is MysteryBoxGame;
+        choiceDropdown.gameObject.SetActive(usesChoice);
+
+        if (currentGame is MysteryBoxGame)
+        {
+            choiceDropdown.ClearOptions();
+            choiceDropdown.AddOptions(new List<string> { "1", "2", "3", "4", "5" });
+        }
+        else if (currentGame is RouletteGame)
+        {
+            choiceDropdown.ClearOptions();
+            choiceDropdown.AddOptions(new List<string> { "Red", "Black", "Green" });
+        }
+
         resultText.text = "";
     }
 
@@ -105,25 +121,20 @@ public class GambleUI : MonoBehaviour
             if (fighter != null)
                 totalLuck += fighter.luck;
 
-        float finalChance;
+        float baseChance = currentGame.BaseWinChance;
+        float modifier = LuckMath.GetLuckWinModifier(totalLuck, baseChance);
+        Debug.Log($"Base Chance: {baseChance}, Luck Modifier: {modifier}");
 
         if (currentGame is RouletteGame && !string.IsNullOrEmpty(choiceDropdown.options[choiceDropdown.value].text))
         {
-            string choice = choiceDropdown.options[choiceDropdown.value].text;
+            string choice = choiceDropdown.options[choiceDropdown.value].text.ToLower();
             if (choice == "green")
             {
-                finalChance = 1f / 37f; // Fixed chance for green
+                baseChance = 1f / 37f;
+                modifier = LuckMath.GetLuckWinModifier(totalLuck, baseChance);
             }
-            else
-            {
-                finalChance = LuckMath.GetLuckWinModifier(totalLuck);
-            }
-        }
-        else
-        {
-            finalChance = LuckMath.GetLuckWinModifier(totalLuck);
         }
 
-        winChanceText.text = $"Win Chance: {(finalChance * 100f):F1}%";
+        winChanceText.text = $"Win Chance: {(modifier * 100f):F1}%";
     }
 }

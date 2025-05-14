@@ -7,7 +7,7 @@ public class CoinFlipGame : IGambleGame
 
     public bool PlayGame(GambleGameData data, out bool isWin, out int payout)
     {
-        float chance = LuckMath.GetLuckWinModifier(data.totalLuck);
+        float chance = LuckMath.GetLuckWinModifier(data.totalLuck, BaseWinChance);
         float roll = Random.value;
         isWin = roll < chance;
         payout = isWin ? data.wager * 2 : 0;

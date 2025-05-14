@@ -32,6 +32,23 @@ public class FighterSlot : MonoBehaviour, IDropHandler
         icon.enabled = true;
         nameText.text = draggedUI.fighterData.fighterName;
 
+        // Text color based on rarity
+        switch (assignedUI.fighterData.rarity)
+        {
+            case Fighter.Rarity.Common:
+                nameText.color = Color.gray;
+                break;
+            case Fighter.Rarity.Rare:
+                nameText.color = new Color(0.1f, 0.5f, 1f); // blue
+                break;
+            case Fighter.Rarity.Epic:
+                nameText.color = new Color(0.6f, 0.2f, 1f); // purple
+                break;
+            case Fighter.Rarity.Legendary:
+                nameText.color = new Color(1f, 0.6f, 0.1f); // orange
+                break;
+        }
+
         if (BattleDataManager.Instance.selectedFighters.Count <= slotIndex)
         {
             while (BattleDataManager.Instance.selectedFighters.Count <= slotIndex)
@@ -100,6 +117,23 @@ public class FighterSlot : MonoBehaviour, IDropHandler
                 icon.enabled = true;
                 nameText.text = fighter.fighterName;
 
+                // Color based on rarity
+                switch (fighter.rarity)
+                {
+                    case Fighter.Rarity.Common:
+                        nameText.color = Color.gray;
+                        break;
+                    case Fighter.Rarity.Rare:
+                        nameText.color = new Color(0.1f, 0.5f, 1f); // blue
+                        break;
+                    case Fighter.Rarity.Epic:
+                        nameText.color = new Color(0.6f, 0.2f, 1f); // purple
+                        break;
+                    case Fighter.Rarity.Legendary:
+                        nameText.color = new Color(1f, 0.6f, 0.1f); // orange
+                        break;
+                }
+
                 FighterUsageTracker.Instance.MarkUsed(ui);
                 ui.UpdateVisualState();
 
@@ -111,6 +145,23 @@ public class FighterSlot : MonoBehaviour, IDropHandler
         icon.sprite = fighter.icon;
         icon.enabled = true;
         nameText.text = fighter.fighterName;
+
+        // Color based on rarity
+        switch (fighter.rarity)
+        {
+            case Fighter.Rarity.Common:
+                nameText.color = Color.gray;
+                break;
+            case Fighter.Rarity.Rare:
+                nameText.color = new Color(0.1f, 0.5f, 1f); // blue
+                break;
+            case Fighter.Rarity.Epic:
+                nameText.color = new Color(0.6f, 0.2f, 1f); // purple
+                break;
+            case Fighter.Rarity.Legendary:
+                nameText.color = new Color(1f, 0.6f, 0.1f); // orange
+                break;
+        }
     }
 
 }

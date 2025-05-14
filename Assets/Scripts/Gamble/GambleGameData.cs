@@ -15,19 +15,19 @@ public static class LuckMath
     /// 100 luck = 50% chance
     /// Above 100: Logarithmic scale approaching 100%
     /// </summary>
-    public static float GetLuckWinModifier(int totalLuck)
+    public static float GetLuckWinModifier(int totalLuck, float baseChance)
     {
         if (totalLuck < 0)
         {
             // For negative luck, linearly decrease chance from 40% down to 0%
             // At -100 luck, chance would be 30% (40% - 10%)
             // You can adjust the scaling factor to make it decrease faster/slower
-            return 0.4f + (0.2f * (Mathf.Clamp(totalLuck, -100, 0) / 100f));
+            return baseChance + (0.2f * (Mathf.Clamp(totalLuck, -100, 0) / 100f));
         }
         else if (totalLuck <= 100)
         {
             // Linear interpolation between 40% and 50% for 0-100 luck
-            return 0.4f + (0.1f * (Mathf.Clamp(totalLuck, 0, 100) / 100f));
+            return baseChance + (0.1f * (Mathf.Clamp(totalLuck, 0, 100) / 100f));
         }
         else
         {
@@ -36,7 +36,7 @@ public static class LuckMath
             float logLuck = Mathf.Log(x - 100f); // Start from 1 when luck=101
             float maxLog = Mathf.Log(100000f); // Adjust this to control how quickly it approaches 100%
             float progress = logLuck / maxLog;
-            return 0.5f + (0.5f * Mathf.Clamp01(progress));
+            return baseChance + (0.5f * Mathf.Clamp01(progress));
         }
     }
 }
