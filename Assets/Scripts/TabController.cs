@@ -5,12 +5,16 @@ public class TabController : MonoBehaviour
     public GameObject fightPanel;
     public GameObject teamPanel;
     public GameObject shopPanel;
+    public GameObject gamblePanel;
+    public GameObject victoryPanel;
 
     public void ShowFightTab()
     {
         fightPanel.SetActive(true);
         teamPanel.SetActive(false);
         shopPanel.SetActive(false);
+        gamblePanel.SetActive(false);
+        victoryPanel.SetActive(false);
 
         FindObjectOfType<BattleController>()?.StartBattle();
     }
@@ -20,6 +24,7 @@ public class TabController : MonoBehaviour
         fightPanel.SetActive(false);
         teamPanel.SetActive(true);
         shopPanel.SetActive(false);
+        gamblePanel.SetActive(false);
     }
 
     public void ShowShopTab()
@@ -27,6 +32,16 @@ public class TabController : MonoBehaviour
         fightPanel.SetActive(false);
         teamPanel.SetActive(false);
         shopPanel.SetActive(true);
+        gamblePanel.SetActive(false);
+    }
+
+    public void ShowGambleTab()
+    {
+        fightPanel.SetActive(false);
+        teamPanel.SetActive(false);
+        shopPanel.SetActive(false);
+        gamblePanel.SetActive(true);
+        victoryPanel.SetActive(false);
     }
 
     void Start()

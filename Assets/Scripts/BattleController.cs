@@ -23,7 +23,12 @@ public class BattleController : MonoBehaviour
         { Fighter.Rarity.Legendary, 0.001f },
     };
 
-    private void Update()
+    void Start()
+    {
+        battleEnded = false;
+    }
+
+    private void FixedUpdate()
     {
         bool hasValidFighters = BattleDataManager.Instance.selectedFighters.Exists(f => f != null);
         if (!hasValidFighters)

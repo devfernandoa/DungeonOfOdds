@@ -8,6 +8,7 @@ public class VictoryDefeatUI : MonoBehaviour
     public TextMeshProUGUI floorText;
     public Button gambleButton;
     public Button continueButton;
+    public TabController tabController;
 
     public void Show(bool playerWon)
     {
@@ -26,7 +27,8 @@ public class VictoryDefeatUI : MonoBehaviour
 
         gambleButton.onClick.AddListener(() =>
         {
-            // GambleSystem.Instance.OpenGamblingUI(); // your gambling core logic
+            GameLoopController.Instance.ContinueAfterBattle(playerWon); // loads next battle or resets
+            tabController.ShowGambleTab(); // show gamble tab
         });
 
         continueButton.onClick.AddListener(() =>
