@@ -7,7 +7,7 @@ public class GambleUI : MonoBehaviour
 {
     public TMP_Dropdown gameDropdown;
     public TMP_InputField wagerInput;
-    public TMP_InputField choiceInput;
+    public TMP_Dropdown choiceDropdown;
     public Button playButton;
     public TMP_Text resultText;
     public TMP_Text winChanceText;
@@ -33,14 +33,21 @@ public class GambleUI : MonoBehaviour
         UpdateWinChancePreview();
 
         wagerInput.onValueChanged.AddListener(_ => UpdateWinChancePreview());
-        choiceInput.onValueChanged.AddListener(_ => UpdateWinChancePreview());
+        choiceDropdown.onValueChanged.AddListener(_ => UpdateWinChancePreview());
         gameDropdown.onValueChanged.AddListener(_ => UpdateWinChancePreview());
+    }
+    void Update()
+    {
+        playButton.interactable =
+            int.TryParse(wagerInput.text, out int wager) &&
+            wager > 0 &&
+            wager <= PointsManager.Instance.currentPoints;
     }
 
     void OnGameChanged(int index)
     {
         currentGame = games[(GambleGameType)index];
-        choiceInput.gameObject.SetActive(currentGame is RouletteGame); // only show for games that use it
+        choiceDropdown.gameObject.SetActive(currentGame is RouletteGame); // only show for games that use it
         resultText.text = "";
     }
 
@@ -58,7 +65,7 @@ public class GambleUI : MonoBehaviour
             return;
         }
 
-        string choice = choiceInput.text.Trim();
+        string choice = choiceDropdown.options[choiceDropdown.value].text;
         int totalLuck = 0;
 
         foreach (var fighter in BattleDataManager.Instance.selectedFighters)
@@ -98,9 +105,9 @@ public class GambleUI : MonoBehaviour
 
         float finalChance;
 
-        if (currentGame is RouletteGame && !string.IsNullOrEmpty(choiceInput.text))
+        if (currentGame is RouletteGame && !string.IsNullOrEmpty(choiceDropdown.options[choiceDropdown.value].text))
         {
-            string choice = choiceInput.text.ToLowerInvariant();
+            string choice = choiceDropdown.options[choiceDropdown.value].text;
             if (choice == "green")
             {
                 finalChance = 1f / 37f; // Fixed chance for green
